@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Query
 from app.models import (
     SummaryResponse, MonthlyStats, WeeklyStats,
-    YearlyStats, PaceTrendItem, PersonalBestsResponse
+    YearlyStats, PaceTrendItem, PersonalBestsResponse,
+    TrainingTypeStatsResponse
 )
 from app.services.stats_service import (
     get_summary, get_monthly_stats, get_weekly_stats,
-    get_yearly_stats, get_pace_trend, get_personal_bests
+    get_yearly_stats, get_pace_trend, get_personal_bests,
+    get_training_type_stats
 )
 
 router = APIRouter(prefix="/api/stats", tags=["统计"])
@@ -39,3 +41,8 @@ def pace_trend(period: str = Query("monthly", enum=["monthly", "weekly", "yearly
 @router.get("/personal-bests", response_model=PersonalBestsResponse)
 def personal_bests():
     return {"personal_bests": get_personal_bests()}
+
+
+@router.get("/training-type", response_model=TrainingTypeStatsResponse)
+def training_type():
+    return {"items": get_training_type_stats()}

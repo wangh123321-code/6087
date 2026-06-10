@@ -12,6 +12,7 @@ class RunRecordCreate(BaseModel):
     location: Optional[str] = ""
     weather: Optional[str] = ""
     feeling: Optional[str] = ""
+    training_type: Optional[str] = ""
     gpx_data: Optional[str] = None
 
 
@@ -24,6 +25,7 @@ class RunRecordUpdate(BaseModel):
     location: Optional[str] = None
     weather: Optional[str] = None
     feeling: Optional[str] = None
+    training_type: Optional[str] = None
     gpx_data: Optional[str] = None
 
 
@@ -37,6 +39,7 @@ class RunRecordResponse(BaseModel):
     location: str
     weather: str
     feeling: str
+    training_type: str
     gpx_data: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
@@ -125,3 +128,14 @@ class PersonalBest(BaseModel):
 
 class PersonalBestsResponse(BaseModel):
     personal_bests: list[PersonalBest]
+
+
+class TrainingTypeStatsItem(BaseModel):
+    training_type: str
+    runs: int
+    distance: float
+    avg_pace: float
+
+
+class TrainingTypeStatsResponse(BaseModel):
+    items: list[TrainingTypeStatsItem]

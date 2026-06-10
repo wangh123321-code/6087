@@ -26,6 +26,7 @@ def init_db():
             location TEXT DEFAULT '',
             weather TEXT DEFAULT '',
             feeling TEXT DEFAULT '',
+            training_type TEXT DEFAULT '',
             gpx_data TEXT,
             created_at TEXT DEFAULT (datetime('now')),
             updated_at TEXT DEFAULT (datetime('now'))
@@ -33,6 +34,11 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_run_records_date ON run_records(date)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_run_records_distance ON run_records(distance)")
+
+    cursor.execute("PRAGMA table_info(run_records)")
+    columns = [col[1] for col in cursor.fetchall()]
+    if 'training_type' not in columns:
+        cursor.execute("ALTER TABLE run_records ADD COLUMN training_type TEXT DEFAULT ''")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS goals (

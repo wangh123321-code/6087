@@ -14,7 +14,7 @@
           {{ tab.label }}
         </button>
       </div>
-      <div v-if="activeTab !== 'bests'" class="ml-auto">
+      <div v-if="activeTab !== 'bests' && activeTab !== 'training'" class="ml-auto">
         <PeriodSelector v-model="period" :options="periodOptions" />
       </div>
     </div>
@@ -27,6 +27,17 @@
     <div v-if="activeTab === 'pace'" class="bg-white/90 rounded-card p-5 shadow-sm border border-black/5">
       <h3 class="text-sm font-medium text-gray-500 mb-4">配速趋势</h3>
       <v-chart :option="paceChartOption" autoresize style="height: 360px; width: 100%;" />
+    </div>
+
+    <div v-if="activeTab === 'training'" class="space-y-4">
+      <div class="bg-white/90 rounded-card p-5 shadow-sm border border-black/5">
+        <h3 class="text-sm font-medium text-gray-500 mb-4">训练类型占比</h3>
+        <v-chart :option="trainingTypePieOption" autoresize style="height: 360px; width: 100%;" />
+      </div>
+      <div class="bg-white/90 rounded-card p-5 shadow-sm border border-black/5">
+        <h3 class="text-sm font-medium text-gray-500 mb-4">训练类型里程分布</h3>
+        <v-chart :option="trainingTypeBarOption" autoresize style="height: 360px; width: 100%;" />
+      </div>
     </div>
 
     <div v-if="activeTab === 'bests'" class="grid grid-cols-4 gap-4">
@@ -57,7 +68,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { Download } from 'lucide-vue-next'
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
-import { BarChart, LineChart } from 'echarts/charts'
+import { BarChart, LineChart, PieChart } from 'echarts/charts'
 import { TitleComponent, TooltipComponent, GridComponent, LegendComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import PeriodSelector from '@/components/PeriodSelector.vue'
@@ -65,7 +76,7 @@ import { useStatsStore } from '@/stores/stats'
 import { formatPace, formatDuration, formatDate } from '@/utils/format'
 import * as api from '@/utils/api'
 
-use([BarChart, LineChart, TitleComponent, TooltipComponent, GridComponent, LegendComponent, CanvasRenderer])
+use([BarChart, LineChart, PieChart, TitleComponent, TooltipComponent, GridComponent, LegendComponent, CanvasRenderer])
 
 const statsStore = useStatsStore()
 const activeTab = ref('distance')
@@ -74,6 +85,7 @@ const period = ref('monthly')
 const tabs = [
   { key: 'distance', label: '跑量统计' },
   { key: 'pace', label: '配速趋势' },
+  { key: 'training', label: '训练类型' },
   { key: 'bests', label: '最佳成绩' },
 ]
 
@@ -189,6 +201,85 @@ const paceChartOption = computed(() => {
   }
 })
 
+const TRAINING_TYPE_COLORS: Record<string, string> = {
+  '恢复跑': '#4CAF50',
+  '节奏跑': '#FF9800',
+  '间歇跑': '#F44336',
+  '长距离': '#2196F3',
+  '未标注': '#9E9E9E',
+}
+
+const trainingTypePieOption = computed(() => {
+  const items = statsStore.trainingTypeStats?.items ?? []
+  const pieData = items.map(item => ({
+    name: item.training_type,
+    value: item.runs,
+    itemStyle: { color: TRAINING_TYPE_COLORS[item.training_type] || '#9E9E9E' }
+  }))
+  return {
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: '#1A1A2E',
+      borderColor: '#1A1A2E',
+      textStyle: { color: '#fff', fontSize: 12 },
+      formatter: (params: any) => `${params.name}<br/>次数: ${params.value} (${params.percent}%)`
+    },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center',
+      textStyle: { fontSize: 12, color: '#666' }
+    },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      center: ['40%', '50%'],
+      avoidLabelOverlap: true,
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      label: { show: true, formatter: '{b}\n{d}%', fontSize: 12 },
+      data: pieData
+    }]
+  }
+})
+
+const trainingTypeBarOption = computed(() => {
+  const items = statsStore.trainingTypeStats?.items ?? []
+  return {
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#1A1A2E',
+      borderColor: '#1A1A2E',
+      textStyle: { color: '#fff', fontSize: 12 },
+      formatter: (params: any) => {
+        const p = params[0]
+        const item = items[p.dataIndex]
+        return `${p.name}<br/>里程: ${p.value} km<br/>次数: ${item.runs}<br/>平均配速: ${formatPace(item.avg_pace)}`
+      }
+    },
+    grid: { left: 60, right: 20, top: 20, bottom: 30 },
+    xAxis: {
+      type: 'category',
+      data: items.map(i => i.training_type),
+      axisLabel: { color: '#999', fontSize: 11 },
+      axisLine: { lineStyle: { color: '#E5E7EB' } },
+      axisTick: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { color: '#999', fontSize: 11, formatter: '{value} km' },
+      splitLine: { lineStyle: { color: '#F3F4F6' } },
+    },
+    series: [{
+      type: 'bar',
+      data: items.map(i => ({
+        value: Number(i.distance.toFixed(1)),
+        itemStyle: { color: TRAINING_TYPE_COLORS[i.training_type] || '#9E9E9E', borderRadius: [4, 4, 0, 0] }
+      })),
+      barWidth: '50%',
+    }]
+  }
+})
+
 watch(period, () => {
   const year = new Date().getFullYear()
   const month = new Date().getMonth() + 1
@@ -220,6 +311,7 @@ onMounted(async () => {
     statsStore.fetchMonthlyStats(year),
     statsStore.fetchPaceTrend('monthly'),
     statsStore.fetchPersonalBests(),
+    statsStore.fetchTrainingTypeStats(),
   ])
 })
 </script>

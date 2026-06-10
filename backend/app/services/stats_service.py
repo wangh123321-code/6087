@@ -209,3 +209,52 @@ def get_goal_progress(goal_id: int) -> dict | None:
         "percentage": percentage,
         "monthly_progress": monthly_progress
     }
+
+
+def get_training_type_stats() -> list[dict]:
+    VALID_TYPES = {"恢复跑", "节奏跑", "间歇跑", "长距离"}
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """SELECT training_type,
+                  COUNT(*),
+                  COALESCE(SUM(distance), 0),
+                  COALESCE(AVG(avg_pace), 0)
+           FROM run_records
+           GROUP BY training_type"""
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    results = []
+    unannotated = {"training_type": "未标注", "runs": 0, "distance": 0.0, "avg_pace": 0.0}
+    total_distance_for_avg = 0.0
+    total_runs_for_avg = 0
+
+    for row in rows:
+        raw_type = row[0] or ""
+        runs = row[1]
+        distance = round(row[2], 2)
+        avg_pace = round(row[3], 2)
+
+        if raw_type.strip() in VALID_TYPES:
+            results.append({
+                "training_type": raw_type.strip(),
+                "runs": runs,
+                "distance": distance,
+                "avg_pace": avg_pace
+            })
+        else:
+            unannotated["runs"] += runs
+            unannotated["distance"] = round(unannotated["distance"] + distance, 2)
+            total_distance_for_avg += distance
+            total_runs_for_avg += runs
+
+    if unannotated["runs"] > 0:
+        unannotated["avg_pace"] = round(
+            sum(r[3] * r[1] for r in rows if (r[0] or "").strip() not in VALID_TYPES) / unannotated["runs"], 2
+        ) if unannotated["runs"] > 0 else 0.0
+        results.append(unannotated)
+
+    return results

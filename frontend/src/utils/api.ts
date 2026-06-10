@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { RunRecord, RecordQuery, PaginatedResponse, StatsSummary, PeriodStats, PersonalBestsResponse, GpxParseResult, Goal, GoalProgress } from '@/types'
+import type { RunRecord, RecordQuery, PaginatedResponse, StatsSummary, PeriodStats, PersonalBestsResponse, GpxParseResult, Goal, GoalProgress, TrainingTypeStatsResponse } from '@/types'
 
 const api = axios.create({ baseURL: '/api' })
 
@@ -93,5 +93,10 @@ export async function exportCsv(): Promise<Blob> {
 
 export async function exportJson(): Promise<Blob> {
   const { data } = await api.get('/export/json', { responseType: 'blob' })
+  return data
+}
+
+export async function getTrainingTypeStats(): Promise<TrainingTypeStatsResponse> {
+  const { data } = await api.get('/stats/training-type')
   return data
 }

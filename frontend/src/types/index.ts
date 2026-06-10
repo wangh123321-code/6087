@@ -8,6 +8,7 @@ export interface RunRecord {
   location: string
   weather: string
   feeling: string
+  training_type: string
   gpx_data: string | null
   created_at: string
   updated_at: string
@@ -79,4 +80,15 @@ export interface GoalProgress {
   current_distance: number
   percentage: number
   monthly_progress: { month: string; distance: number }[]
+}
+
+export interface TrainingTypeStatsItem {
+  training_type: string
+  runs: number
+  distance: number
+  avg_pace: number
+}
+
+export interface TrainingTypeStatsResponse {
+  items: TrainingTypeStatsItem[]
 }

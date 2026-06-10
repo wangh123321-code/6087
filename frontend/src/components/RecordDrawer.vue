@@ -54,6 +54,13 @@
               </select>
             </div>
             <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">训练类型</label>
+              <select v-model="form.training_type" class="input-field">
+                <option value="">请选择</option>
+                <option v-for="t in trainingTypeOptions" :key="t" :value="t">{{ t }}</option>
+              </select>
+            </div>
+            <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">GPX 文件</label>
               <div
                 class="border-2 border-dashed border-gray-300 rounded-btn p-6 text-center cursor-pointer hover:border-primary transition-colors"
@@ -116,6 +123,7 @@ const isEdit = computed(() => !!props.record?.id)
 
 const weatherOptions = ['晴', '多云', '阴', '小雨', '大雨', '雪']
 const feelingOptions = ['极好', '好', '一般', '差', '极差']
+const trainingTypeOptions = ['恢复跑', '节奏跑', '间歇跑', '长距离']
 
 const form = reactive({
   date: '',
@@ -126,6 +134,7 @@ const form = reactive({
   location: '',
   weather: '',
   feeling: '',
+  training_type: '',
 })
 
 const durationH = ref(0)
@@ -160,6 +169,7 @@ watch(() => props.visible, (val) => {
     form.location = props.record.location || ''
     form.weather = props.record.weather || ''
     form.feeling = props.record.feeling || ''
+    form.training_type = props.record.training_type || ''
     durationFromSeconds(props.record.duration || 0)
   } else if (val) {
     form.date = new Date().toISOString().slice(0, 10)
@@ -170,6 +180,7 @@ watch(() => props.visible, (val) => {
     form.location = ''
     form.weather = ''
     form.feeling = ''
+    form.training_type = ''
     durationH.value = 0
     durationM.value = 0
     durationS.value = 0

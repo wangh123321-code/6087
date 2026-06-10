@@ -12,10 +12,10 @@ def create_record(record: RunRecordCreate):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        """INSERT INTO run_records (date, distance, duration, avg_pace, avg_heart_rate, location, weather, feeling, gpx_data)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        """INSERT INTO run_records (date, distance, duration, avg_pace, avg_heart_rate, location, weather, feeling, training_type, gpx_data)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (record.date, record.distance, record.duration, record.avg_pace,
-         record.avg_heart_rate, record.location, record.weather, record.feeling, record.gpx_data)
+         record.avg_heart_rate, record.location, record.weather, record.feeling, record.training_type, record.gpx_data)
     )
     conn.commit()
     record_id = cursor.lastrowid
